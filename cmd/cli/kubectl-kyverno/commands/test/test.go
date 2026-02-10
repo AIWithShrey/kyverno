@@ -233,7 +233,8 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 	var store store.Store
 	store.SetLocal(true)
 	store.SetRegistryAccess(registryAccess)
-	store.AllowApiCall(len(testCase.Test.ClusterResources) > 0)
+	hasClusterResources := len(testCase.Test.ClusterResources) > 0
+	store.AllowApiCall(hasClusterResources)
 	if vars != nil {
 		vars.SetInStore(&store)
 	}
@@ -341,7 +342,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 			NamespaceSelectorMap:              vars.NamespaceSelectors(),
 			Rc:                                &resultCounts,
 			RuleToCloneSourceResource:         ruleToCloneSourceResource,
-			Cluster:                           false,
+			Cluster:                           hasClusterResources,
 			Client:                            dClient,
 			Subresources:                      vars.Subresources(),
 			Out:                               io.Discard,
@@ -365,6 +366,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 				testCase.Fs,
 				contextPath,
 				false,
+				!hasClusterResources,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply policies on resource %v (%w)", resource.GetName(), err)
@@ -383,6 +385,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 				true,
 				testCase.Fs,
 				contextPath,
+				!hasClusterResources,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply policies on resource %v (%w)", resource.GetName(), err)
@@ -419,7 +422,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 			NamespaceSelectorMap:              vars.NamespaceSelectors(),
 			Rc:                                &resultCounts,
 			RuleToCloneSourceResource:         ruleToCloneSourceResource,
-			Cluster:                           false,
+			Cluster:                           hasClusterResources,
 			Client:                            dClient,
 			Subresources:                      vars.Subresources(),
 			Out:                               io.Discard,
@@ -442,6 +445,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 				testCase.Fs,
 				contextPath,
 				false,
+				!hasClusterResources,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply validating policies on JSON payload %s (%w)", testCase.Test.JSONPayload, err)
@@ -460,6 +464,7 @@ func runTest(out io.Writer, testCase test.TestCase, registryAccess bool) (*TestR
 				true,
 				testCase.Fs,
 				contextPath,
+				!hasClusterResources,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply policies on JSON payload %v (%w)", testCase.Test.JSONPayload, err)
@@ -495,6 +500,7 @@ func applyImageValidatingPolicies(
 	f billy.Filesystem,
 	contextPath string,
 	continueOnFail bool,
+	isFake bool,
 ) ([]engineapi.EngineResponse, error) {
 	provider, err := ivpolengine.NewProvider(ivps, celExceptions)
 	if err != nil {
@@ -515,7 +521,7 @@ func applyImageValidatingPolicies(
 	if err != nil {
 		return nil, err
 	}
-	contextProvider, err := processor.NewContextProvider(dclient, restMapper, f, contextPath, registryAccess, true)
+	contextProvider, err := processor.NewContextProvider(dclient, restMapper, f, contextPath, registryAccess, isFake)
 	if err != nil {
 		return nil, err
 	}
@@ -622,6 +628,7 @@ func applyDeletingPolicies(
 	registryAccess bool,
 	f billy.Filesystem,
 	contextPath string,
+	isFake bool,
 ) ([]engineapi.EngineResponse, error) {
 	provider, err := dpolengine.NewProvider(dpolcompiler.NewCompiler(), dps, celExceptions)
 	if err != nil {
@@ -633,7 +640,7 @@ func applyDeletingPolicies(
 		return nil, err
 	}
 
-	contextProvider, err := processor.NewContextProvider(dclient, restMapper, f, contextPath, registryAccess, true)
+	contextProvider, err := processor.NewContextProvider(dclient, restMapper, f, contextPath, registryAccess, isFake)
 	if err != nil {
 		return nil, err
 	}
