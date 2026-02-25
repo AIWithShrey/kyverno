@@ -141,13 +141,10 @@ func (p *Policy) evaluateWithData(
 		// evaluate only when rule fails
 		if outcome, err := utils.ConvertToNative[bool](out); err == nil && !outcome {
 			message := validation.Message
-			var messageExprErr error
 			if validation.MessageExpression != nil {
 				if out, _, err := validation.MessageExpression.ContextEval(ctx, dataNew); err != nil {
-					messageExprErr = err
 					message = fmt.Sprintf("failed to evaluate message expression: %s", err)
 				} else if msg, err := utils.ConvertToNative[string](out); err != nil {
-					messageExprErr = err
 					message = fmt.Sprintf("failed to convert message expression to string: %s", err)
 				} else {
 					message = msg
@@ -174,7 +171,7 @@ func (p *Policy) evaluateWithData(
 				Result:           outcome,
 				Message:          message,
 				Index:            index,
-				Error:            messageExprErr,
+				Error:            err,
 				AuditAnnotations: auditAnnotations,
 			}, nil
 		} else if err != nil {
