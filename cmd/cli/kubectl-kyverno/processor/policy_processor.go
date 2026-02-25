@@ -27,10 +27,6 @@ import (
 	"github.com/kyverno/kyverno/pkg/cel/compiler"
 	celengine "github.com/kyverno/kyverno/pkg/cel/engine"
 	"github.com/kyverno/kyverno/pkg/cel/libs"
-	"github.com/kyverno/kyverno/pkg/cel/libs/globalcontext"
-	celhttp "github.com/kyverno/kyverno/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
-	celresource "github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"github.com/kyverno/kyverno/pkg/cel/matching"
 	gpolcompiler "github.com/kyverno/kyverno/pkg/cel/policies/gpol/compiler"
 	gpolengine "github.com/kyverno/kyverno/pkg/cel/policies/gpol/engine"
@@ -38,7 +34,6 @@ import (
 	mpolengine "github.com/kyverno/kyverno/pkg/cel/policies/mpol/engine"
 	vpolcompiler "github.com/kyverno/kyverno/pkg/cel/policies/vpol/compiler"
 	vpolengine "github.com/kyverno/kyverno/pkg/cel/policies/vpol/engine"
-	celutils "github.com/kyverno/kyverno/pkg/cel/utils"
 	"github.com/kyverno/kyverno/pkg/clients/dclient"
 	"github.com/kyverno/kyverno/pkg/config"
 	"github.com/kyverno/kyverno/pkg/engine"
@@ -53,6 +48,7 @@ import (
 	"github.com/kyverno/kyverno/pkg/registryclient"
 	jsonutils "github.com/kyverno/kyverno/pkg/utils/json"
 	utils "github.com/kyverno/kyverno/pkg/utils/restmapper"
+	celutils "github.com/kyverno/sdk/cel/utils"
 	"gomodules.xyz/jsonpatch/v2"
 	yamlv2 "gopkg.in/yaml.v2"
 	admissionv1 "k8s.io/api/admission/v1"
@@ -1044,11 +1040,7 @@ func discoverCELTargets(
 
 		compiledVars := pol.CompiledPolicy.GetCompiledVariables()
 		data := map[string]any{
-			compiler.ObjectKey:        resource.Object,
-			compiler.ResourceKey:      celresource.Context{ContextInterface: contextProvider},
-			compiler.GlobalContextKey: globalcontext.Context{ContextInterface: contextProvider},
-			compiler.HttpKey:          celhttp.Context{ContextInterface: celhttp.NewHTTP(nil)},
-			compiler.ImageDataKey:     imagedata.Context{ContextInterface: contextProvider},
+			compiler.ObjectKey: resource.Object,
 		}
 		vars := lazy.NewMapValue(compiler.VariablesType)
 		data[compiler.VariablesKey] = vars
